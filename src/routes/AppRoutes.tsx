@@ -4,7 +4,7 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-
+import Signup from "../pages/auth/Signup";
 import Inbox from "../pages/inbox/Inbox";
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
@@ -58,13 +58,17 @@ export default function AppRoutes() {
         {/* =========================================
             PUBLIC ROUTES
            ========================================= */}
+ <Route element={<PublicRoute />}>
+  <Route
+    path="/login"
+    element={<Login />}
+  />
 
-        <Route element={<PublicRoute />}>
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-        </Route>
+  <Route
+    path="/signup"
+    element={<Signup />}
+  />
+</Route>
 
 
         {/* =========================================
@@ -148,17 +152,17 @@ export default function AppRoutes() {
               element={<FlowBuilderRoute />}
             />
 
-      
+            {/* Flows */}
 
-<Route
-  path="/flows"
-  element={<Flows />}
-/>
+            <Route
+              path="/flows"
+              element={<Flows />}
+            />
 
-<Route
-  path="/flows/:flowId/builder"
-  element={<FlowBuilderRoute />}
-/>
+            <Route
+              path="/flows/:flowId/builder"
+              element={<FlowBuilderRoute />}
+            />
 
             {/* =====================================
                 WHATSAPP
