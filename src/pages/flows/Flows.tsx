@@ -196,7 +196,7 @@ export default function Flows() {
       </div>
 
       {/* Flow list */}
-      <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+      <div className="overflow-visible rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
 
         <div className="border-b border-[var(--color-border)] px-5 py-4">
           <h2 className="text-sm font-semibold text-[var(--color-text)]">
