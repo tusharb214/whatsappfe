@@ -1,4 +1,4 @@
-import {
+ import {
     useCallback,
     useEffect,
     useMemo,
@@ -818,6 +818,8 @@ const [activeProducts, setActiveProducts] = useState<
 >([]);
 
     const [edges, setEdges] = useState<Edge[]>([]);
+    const [saveMessage, setSaveMessage] = useState("");
+    const [isSavingFlow, setIsSavingFlow] = useState(false);
     const initializedFlowRef = useRef<number | null>(null);
 
 
@@ -1889,24 +1891,33 @@ const [activeProducts, setActiveProducts] = useState<
 
             case "PRODUCT":
                 return (
-                    <PropertyInput
-                        label="Product ID"
-                        value={String(config.productId ?? "")}
-                        onChange={(value) =>
-                            updateConfig("productId", value)
-                        }
-                    />
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-medium text-slate-600">Select active product</label>
+                        <select
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-500"
+                            value={String(config.productId ?? "")}
+                            onChange={(event) => updateConfig("productId", event.target.value)}
+                        >
+                            <option value="">Choose a product...</option>
+                            {activeProducts.map((product) => (
+                                <option key={product.id} value={String(product.id)}>{product.name}</option>
+                            ))}
+                        </select>
+                        {activeProducts.length === 0 && <p className="text-xs text-amber-600">No active products found.</p>}
+                    </div>
                 );
 
             case "CATALOG":
                 return (
-                    <PropertyInput
-                        label="Catalog ID"
-                        value={String(config.catalogId ?? "")}
-                        onChange={(value) =>
-                            updateConfig("catalogId", value)
-                        }
-                    />
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-medium text-slate-600">Meta Catalog</label>
+                        <p className="text-xs text-slate-500">Catalog selection needs the Meta Catalog API. This field is not connected to Meta catalogs yet.</p>
+                        <PropertyInput
+                            label="Catalog ID"
+                            value={String(config.catalogId ?? "")}
+                            onChange={(value) => updateConfig("catalogId", value)}
+                        />
+                    </div>
                 );
 
             case "KEYWORD_TRIGGER":
@@ -1995,14 +2006,35 @@ const [activeProducts, setActiveProducts] = useState<
 
                     <button
                         type="button"
-                        className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 sm:px-4 sm:text-sm"
+                        disabled={isSavingFlow}
+                        onClick={async () => {
+                            setIsSavingFlow(true);
+                            setSaveMessage("");
+                            try {
+                                const persistedNodes = nodes.filter((node) => /^\d+$/.test(String(node.id)));
+                                await Promise.all(persistedNodes.map((node) => updateFlowNode(flowId, Number(node.id), {
+                                    nodeKey: String(node.id),
+                                    nodeType: node.data.nodeType,
+                                    name: node.data.label,
+                                    config: JSON.stringify({ ...node.data.config, buttons: node.data.buttons ?? [] }),
+                                    positionX: node.position.x,
+                                    positionY: node.position.y,
+                                })));
+                                setSaveMessage("Flow saved successfully.");
+                            } catch (error) {
+                                console.error("Failed to save flow:", error);
+                                setSaveMessage("Save failed. Please check the node changes and try again.");
+                            } finally {
+                                setIsSavingFlow(false);
+                            }
+                        }}
+                        className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-60 sm:px-4 sm:text-sm"
                     >
                         <Upload size={15} />
-                        <span className="hidden sm:inline">
-                            Save Flow
-                        </span>
+                        <span>{isSavingFlow ? "Saving..." : "Save Flow"}</span>
                     </button>
                 </div>
+                {saveMessage && <p role="status" className={`px-4 pb-2 text-xs ${saveMessage.includes("failed") ? "text-red-600" : "text-emerald-600"}`}>{saveMessage}</p>}
             </header>
 
             {/* BUILDER */}
