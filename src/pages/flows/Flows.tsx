@@ -13,9 +13,11 @@ import {
   getFlows,
   type Flow,
 } from "../../api/flowApi";
+import { useNavigate } from "react-router-dom";
 import CreateFlow from "./CreateFlow";
 
 export default function Flows() {
+  const navigate = useNavigate();
   const [flows, setFlows] = useState<Flow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -309,9 +311,9 @@ export default function Flows() {
                         <button
                           type="button"
                           onClick={() => {
-                            setOpenMenu(null);
-                            console.log("Open flow", flow.id);
-                          }}
+  setOpenMenu(null);
+  navigate(`/flows/builder/${flow.id}`);
+}}
                           className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
                         >
                           Open

@@ -77,6 +77,8 @@ import {
     X,
     Zap,
 } from "lucide-react";
+import { getActiveCategories } from "../../api/categoryApi";
+import { getActiveProducts } from "../../api/productApi";
 
 import type { ComponentType } from "react";
 
@@ -348,6 +350,14 @@ const NODE_LIBRARY: NodeDefinition[] = [
         icon: ShoppingCart,
     },
 
+    {
+  type: "PRODUCT_MENU",
+  label: "Product Menu",
+  description: "Show active categories and products",
+  category: "COMMERCE",
+  icon: ShoppingBag,
+},
+
     // =========================
     // CONTROL
     // =========================
@@ -365,6 +375,9 @@ const NODE_LIBRARY: NodeDefinition[] = [
         category: "CONTROL",
         icon: Square,
     },
+
+
+
 ];
 
 const CATEGORY_LABELS: Record<NodeCategory, string> = {
@@ -547,6 +560,12 @@ function createDefaultConfig(type: string): Record<string, unknown> {
             return {
                 flowId: "",
             };
+            case "PRODUCT_MENU":
+  return {
+    selectionMode: "ALL_ACTIVE_CATEGORIES",
+    categoryIds: [],
+    message: "Please select a category",
+  };
 
         default:
             return {};
@@ -790,8 +809,35 @@ function FlowBuilderCanvas({
 
     const [nodes, setNodes] = useState<FlowNode[]>([]);
 
+    const [activeCategories, setActiveCategories] = useState<
+    { id: number; name: string }[]
+>([]);
+
+const [activeProducts, setActiveProducts] = useState<
+    { id: number; name: string; categoryId: number | null }[]
+>([]);
+
     const [edges, setEdges] = useState<Edge[]>([]);
     const initializedFlowRef = useRef<number | null>(null);
+
+
+    useEffect(() => {
+    const loadCommerceData = async () => {
+        try {
+            const [categories, products] = await Promise.all([
+                getActiveCategories(),
+                getActiveProducts(),
+            ]);
+
+            setActiveCategories(categories);
+            setActiveProducts(products);
+        } catch (error) {
+            console.error("Failed to load commerce data:", error);
+        }
+    };
+
+    void loadCommerceData();
+}, []);
 
     useEffect(() => {
         if (initializedFlowRef.current === flowId) {
@@ -1741,6 +1787,105 @@ function FlowBuilderCanvas({
                         }
                     />
                 );
+
+
+                case "PRODUCT_MENU": {
+    const selectionMode = String(
+        config.selectionMode ?? "ALL_ACTIVE_CATEGORIES"
+    );
+
+    const selectedCategoryIds = Array.isArray(config.categoryIds)
+        ? (config.categoryIds as number[])
+        : [];
+
+    const toggleCategory = (categoryId: number, checked: boolean) => {
+        const updatedIds = checked
+            ? [...selectedCategoryIds, categoryId]
+            : selectedCategoryIds.filter((id) => id !== categoryId);
+
+        updateConfig("categoryIds", updatedIds);
+    };
+
+    return (
+        <>
+            <PropertyTextarea
+                label="Menu Message"
+                value={String(config.message ?? "")}
+                onChange={(value) => updateConfig("message", value)}
+            />
+
+            <PropertySelect
+                label="Category Selection"
+                value={selectionMode}
+                options={[
+                    "ALL_ACTIVE_CATEGORIES",
+                    "SELECTED_CATEGORIES",
+                ]}
+                onChange={(value) => updateConfig("selectionMode", value)}
+            />
+
+            {selectionMode === "SELECTED_CATEGORIES" && (
+                <div className="space-y-2">
+                    <p className="text-xs font-semibold text-slate-700">
+                        Select Categories
+                    </p>
+
+                    {activeCategories.map((category) => (
+                        <label
+                            key={category.id}
+                            className="flex items-center gap-2 text-xs text-slate-700"
+                        >
+                            <input
+                                type="checkbox"
+                                checked={selectedCategoryIds.includes(category.id)}
+                                onChange={(event) =>
+                                    toggleCategory(
+                                        category.id,
+                                        event.target.checked
+                                    )
+                                }
+                            />
+                            {category.name}
+                        </label>
+                    ))}
+
+                    {activeCategories.length === 0 && (
+                        <p className="text-xs text-slate-500">
+                            No active categories found.
+                        </p>
+                    )}
+                </div>
+            )}
+
+            <div className="rounded-lg bg-slate-50 p-3">
+                <p className="mb-2 text-xs font-semibold text-slate-700">
+                    Available Active Products
+                </p>
+
+                {activeProducts
+                    .filter((product) =>
+                        selectionMode === "ALL_ACTIVE_CATEGORIES"
+                            ? true
+                            : selectedCategoryIds.includes(product.categoryId ?? -1)
+                    )
+                    .map((product) => (
+                        <p
+                            key={product.id}
+                            className="py-1 text-xs text-slate-600"
+                        >
+                            {product.name}
+                        </p>
+                    ))}
+
+                {activeProducts.length === 0 && (
+                    <p className="text-xs text-slate-500">
+                        No active products found.
+                    </p>
+                )}
+            </div>
+        </>
+    );
+}
 
             case "PRODUCT":
                 return (
