@@ -312,7 +312,7 @@ export default function Flows() {
                           type="button"
                           onClick={() => {
   setOpenMenu(null);
-  navigate(`/flows/builder/${flow.id}`);
+  navigate(`/flows/${flow.id}/builder`);
 }}
                           className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
                         >
