@@ -426,6 +426,14 @@ function createDefaultConfig(type: string): Record<string, unknown> {
             return {
                 text: "Please select an option",
                 buttonText: "View options",
+                sectionTitle: "Menu",
+                options: [
+                    {
+                        id: "option_1",
+                        title: "Option 1",
+                        description: "",
+                    },
+                ],
             };
 
         case "TEXT_INPUT":
@@ -606,15 +614,30 @@ function FlowNodeCard({ data, selected }: NodeProps<FlowNode>) {
                                 />
                             </div>
                         ))
+                    ) : data.nodeType === "LIST" ? (
+                        (Array.isArray(data.config?.options) ? data.config.options : []).map(
+                            (option: { id?: string; title?: string }, index: number) => (
+                                <div
+                                    key={option.id || index}
+                                    className="relative flex items-center justify-between border-b border-slate-100 px-4 py-2.5 last:border-b-0"
+                                >
+                                    <span className="truncate text-xs font-medium text-slate-700">
+                                        {option.title || `Option ${index + 1}`}
+                                    </span>
+                                    <Handle
+                                        type="source"
+                                        position={Position.Right}
+                                        id={option.id || `option_${index + 1}`}
+                                        className="!right-[-6px] !h-3 !w-3 !border-2 !border-white !bg-emerald-500"
+                                    />
+                                </div>
+                            )
+                        )
                     ) : (
                         <>
                             <div className="relative flex items-center justify-between px-4 py-2.5">
                                 <span className="text-xs font-medium text-slate-700">
-                                    {data.nodeType === "CONDITION"
-                                        ? "TRUE"
-                                        : data.nodeType === "SWITCH"
-                                            ? "CASE"
-                                            : "OPTIONS"}
+                                    {data.nodeType === "CONDITION" ? "TRUE" : "CASE"}
                                 </span>
 
                                 <Handle
@@ -1223,7 +1246,7 @@ function FlowBuilderCanvas({
 
     const updateConfig = (
         key: string,
-        value: string | number | boolean
+        value: unknown
     ) => {
         if (!selectedNode) {
             return;
@@ -1422,7 +1445,41 @@ function FlowBuilderCanvas({
                     </>
                 );
 
-            case "LIST":
+            case "LIST": {
+                const listOptions = Array.isArray(config.options)
+                    ? config.options as Array<{ id: string; title: string; description?: string }>
+                    : [];
+
+                const updateListOption = (
+                    index: number,
+                    field: "title" | "description",
+                    value: string
+                ) => {
+                    const updated = listOptions.map((option, i) =>
+                        i === index ? { ...option, [field]: value } : option
+                    );
+                    updateConfig("options", updated);
+                };
+
+                const addListOption = () => {
+                    if (listOptions.length >= 10) return;
+                    updateConfig("options", [
+                        ...listOptions,
+                        {
+                            id: `option_${Date.now()}`,
+                            title: `Option ${listOptions.length + 1}`,
+                            description: "",
+                        },
+                    ]);
+                };
+
+                const removeListOption = (index: number) => {
+                    updateConfig(
+                        "options",
+                        listOptions.filter((_, i) => i !== index)
+                    );
+                };
+
                 return (
                     <>
                         <PropertyTextarea
@@ -1434,12 +1491,79 @@ function FlowBuilderCanvas({
                         <PropertyInput
                             label="Button Text"
                             value={String(config.buttonText ?? "")}
-                            onChange={(value) =>
-                                updateConfig("buttonText", value)
-                            }
+                            onChange={(value) => updateConfig("buttonText", value)}
                         />
+
+                        <PropertyInput
+                            label="Section Title"
+                            value={String(config.sectionTitle ?? "Menu")}
+                            onChange={(value) => updateConfig("sectionTitle", value)}
+                        />
+
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold text-slate-700">
+                                    List Options ({listOptions.length}/10)
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={addListOption}
+                                    disabled={listOptions.length >= 10}
+                                    className="flex items-center gap-1 text-xs font-semibold text-indigo-600 disabled:opacity-40"
+                                >
+                                    <Plus size={14} />
+                                    Add Option
+                                </button>
+                            </div>
+
+                            {listOptions.map((option, index) => (
+                                <div
+                                    key={option.id}
+                                    className="space-y-2 rounded-lg border border-slate-200 p-3"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-medium text-slate-600">
+                                            Option {index + 1}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeListOption(index)}
+                                            className="text-slate-400 hover:text-red-500"
+                                            aria-label={`Remove option ${index + 1}`}
+                                        >
+                                            <Trash2 size={15} />
+                                        </button>
+                                    </div>
+
+                                    <input
+                                        value={option.title}
+                                        onChange={(event) =>
+                                            updateListOption(index, "title", event.target.value)
+                                        }
+                                        placeholder="Option title"
+                                        maxLength={24}
+                                        className="h-9 w-full rounded-lg border border-slate-200 px-3 text-xs outline-none focus:border-indigo-500"
+                                    />
+
+                                    <input
+                                        value={option.description ?? ""}
+                                        onChange={(event) =>
+                                            updateListOption(index, "description", event.target.value)
+                                        }
+                                        placeholder="Description (optional)"
+                                        maxLength={72}
+                                        className="h-9 w-full rounded-lg border border-slate-200 px-3 text-xs outline-none focus:border-indigo-500"
+                                    />
+
+                                    <p className="break-all text-[10px] text-slate-400">
+                                        ID: {option.id}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
                     </>
                 );
+            }
 
             case "TEXT_INPUT":
             case "PHONE_INPUT":
