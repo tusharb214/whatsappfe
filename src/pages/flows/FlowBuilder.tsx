@@ -1,4 +1,4 @@
- import {
+import {
     useCallback,
     useEffect,
     useMemo,
@@ -352,12 +352,12 @@ const NODE_LIBRARY: NodeDefinition[] = [
     },
 
     {
-  type: "PRODUCT_MENU",
-  label: "Product Menu",
-  description: "Show active categories and products",
-  category: "COMMERCE",
-  icon: ShoppingBag,
-},
+        type: "PRODUCT_MENU",
+        label: "Product Menu",
+        description: "Show active categories and products",
+        category: "COMMERCE",
+        icon: ShoppingBag,
+    },
 
     // =========================
     // CONTROL
@@ -561,12 +561,12 @@ function createDefaultConfig(type: string): Record<string, unknown> {
             return {
                 flowId: "",
             };
-            case "PRODUCT_MENU":
-  return {
-    selectionMode: "ALL_ACTIVE_CATEGORIES",
-    categoryIds: [],
-    message: "Please select a category",
-  };
+        case "PRODUCT_MENU":
+            return {
+                selectionMode: "ALL_ACTIVE_CATEGORIES",
+                categoryIds: [],
+                message: "Please select a category",
+            };
 
         default:
             return {};
@@ -811,50 +811,50 @@ function FlowBuilderCanvas({
     const [nodes, setNodes] = useState<FlowNode[]>([]);
 
     const [activeCategories, setActiveCategories] = useState<
-    { id: number; name: string }[]
->([]);
+        { id: number; name: string }[]
+    >([]);
 
-const [activeProducts, setActiveProducts] = useState<
-  {
-    id: number;
-    name: string;
-    categoryId: number | null;
-    imageUrl: string | null;
-    price: number;
-    currency: string;
-    description: string | null;
-  }[]
->([]);
+    const [activeProducts, setActiveProducts] = useState<
+        {
+            id: number;
+            name: string;
+            categoryId: number | null;
+            imageUrl: string | null;
+            price: number;
+            currency: string;
+            description: string | null;
+        }[]
+    >([]);
 
     const [edges, setEdges] = useState<Edge[]>([]);
     const [saveMessage, setSaveMessage] = useState("");
-        const [isSavingFlow, setIsSavingFlow] = useState(false);
+    const [isSavingFlow, setIsSavingFlow] = useState(false);
     const [flowStatus, setFlowStatus] = useState<string>("DRAFT");
     const [isTogglingStatus, setIsTogglingStatus] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
-    const initializedFlowRef = useRef<number | null>(null);  
-  
+    const initializedFlowRef = useRef<number | null>(null);
+
 
 
     useEffect(() => {
-    const loadCommerceData = async () => {
-        try {
-            const [categories, products] = await Promise.all([
-                getActiveCategories(),
-                getActiveProducts(),
-            ]);
+        const loadCommerceData = async () => {
+            try {
+                const [categories, products] = await Promise.all([
+                    getActiveCategories(),
+                    getActiveProducts(),
+                ]);
 
-            setActiveCategories(categories);
-            setActiveProducts(products);
-             console.log("Active products:", products);
-        } catch (error) {
-            console.error("Failed to load commerce data:", error);
-            
-        }
-    };
+                setActiveCategories(categories);
+                setActiveProducts(products);
+                console.log("Active products:", products);
+            } catch (error) {
+                console.error("Failed to load commerce data:", error);
+
+            }
+        };
 
         void loadCommerceData();
-}, []);
+    }, []);
 
     useEffect(() => {
         api.get(`/flows/${flowId}`)
@@ -1108,7 +1108,7 @@ const [activeProducts, setActiveProducts] = useState<
     );
 
     const onNodeDragStop = useCallback(
-              async (_event: MouseEvent | TouchEvent, node: FlowNode) => {
+        async (_event: MouseEvent | TouchEvent, node: FlowNode) => {
             if (!node.id || !Number.isFinite(Number(node.id))) {
                 return;
             }
@@ -1183,7 +1183,7 @@ const [activeProducts, setActiveProducts] = useState<
                         nodeType: apiNode.nodeType,
                         label: apiNode.label ?? libraryNode.label,
                         description: libraryNode.description,
-                                                 category: libraryNode.category,
+                        category: libraryNode.category,
                         config,
                         buttons: [],
                     },
@@ -1347,7 +1347,7 @@ const [activeProducts, setActiveProducts] = useState<
         }));
     };
 
-        const toggleFlowStatus = async () => {
+    const toggleFlowStatus = async () => {
         const target = flowStatus === "PUBLISHED" ? "DRAFT" : "PUBLISHED";
         setIsTogglingStatus(true);
         setSaveMessage("");
@@ -1446,7 +1446,7 @@ const [activeProducts, setActiveProducts] = useState<
             ...node,
             data: {
                 ...node.data,
-                                buttons: (node.data.buttons ?? []).filter(
+                buttons: (node.data.buttons ?? []).filter(
                     (button) => button.id !== buttonId
                 ),
             },
@@ -1472,7 +1472,7 @@ const [activeProducts, setActiveProducts] = useState<
                     />
                 );
 
-                      case "IMAGE":
+            case "IMAGE":
                 return (
                     <>
                         <div>
@@ -1900,103 +1900,136 @@ const [activeProducts, setActiveProducts] = useState<
                 );
 
 
-                case "PRODUCT_MENU": {
-    const selectionMode = String(
-        config.selectionMode ?? "ALL_ACTIVE_CATEGORIES"
-    );
+            case "PRODUCT_MENU": {
+                const selectionMode = String(
+                    config.selectionMode ?? "ALL_ACTIVE_CATEGORIES"
+                );
 
-    const selectedCategoryIds = Array.isArray(config.categoryIds)
-        ? (config.categoryIds as number[])
-        : [];
+                const selectedCategoryIds = Array.isArray(config.categoryIds)
+                    ? (config.categoryIds as number[])
+                    : [];
 
-    const toggleCategory = (categoryId: number, checked: boolean) => {
-        const updatedIds = checked
-            ? [...selectedCategoryIds, categoryId]
-            : selectedCategoryIds.filter((id) => id !== categoryId);
+                const toggleCategory = (categoryId: number, checked: boolean) => {
+                    const updatedIds = checked
+                        ? [...selectedCategoryIds, categoryId]
+                        : selectedCategoryIds.filter((id) => id !== categoryId);
 
-        updateConfig("categoryIds", updatedIds);
-    };
+                    updateConfig("categoryIds", updatedIds);
+                };
 
-    return (
-        <>
-            <PropertyTextarea
-                label="Menu Message"
-                value={String(config.message ?? "")}
-                onChange={(value) => updateConfig("message", value)}
-            />
+                return (
+                    <>
+                        <PropertyTextarea
+                            label="Menu Message"
+                            value={String(config.message ?? "")}
+                            onChange={(value) => updateConfig("message", value)}
+                        />
 
-            <PropertySelect
-                label="Category Selection"
-                value={selectionMode}
-                options={[
-                    "ALL_ACTIVE_CATEGORIES",
-                    "SELECTED_CATEGORIES",
-                ]}
-                onChange={(value) => updateConfig("selectionMode", value)}
-            />
+                        <PropertySelect
+                            label="Category Selection"
+                            value={selectionMode}
+                            options={[
+                                "ALL_ACTIVE_CATEGORIES",
+                                "SELECTED_CATEGORIES",
+                            ]}
+                            onChange={(value) => updateConfig("selectionMode", value)}
+                        />
 
-            {selectionMode === "SELECTED_CATEGORIES" && (
-                <div className="space-y-2">
-                    <p className="text-xs font-semibold text-slate-700">
-                        Select Categories
-                    </p>
+                        {selectionMode === "SELECTED_CATEGORIES" && (
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold text-slate-700">
+                                    Select Categories
+                                </p>
 
-                    {activeCategories.map((category) => (
-                        <label
-                            key={category.id}
-                            className="flex items-center gap-2 text-xs text-slate-700"
-                        >
-                            <input
-                                type="checkbox"
-                                checked={selectedCategoryIds.includes(category.id)}
-                                onChange={(event) =>
-                                    toggleCategory(
-                                        category.id,
-                                        event.target.checked
+                                {activeCategories.map((category) => (
+                                    <label
+                                        key={category.id}
+                                        className="flex items-center gap-2 text-xs text-slate-700"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedCategoryIds.includes(category.id)}
+                                            onChange={(event) =>
+                                                toggleCategory(
+                                                    category.id,
+                                                    event.target.checked
+                                                )
+                                            }
+                                        />
+                                        {category.name}
+                                    </label>
+                                ))}
+
+                                {activeCategories.length === 0 && (
+                                    <p className="text-xs text-slate-500">
+                                        No active categories found.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+
+                        <div className="rounded-lg bg-slate-50 p-3">
+                            <p className="mb-3 text-xs font-semibold text-slate-700">
+                                Available Active Products
+                            </p>
+
+                            <div className="space-y-3">
+                                {activeProducts
+                                    .filter((product) =>
+                                        selectionMode === "ALL_ACTIVE_CATEGORIES"
+                                            ? true
+                                            : selectedCategoryIds.includes(product.categoryId ?? -1)
                                     )
-                                }
-                            />
-                            {category.name}
-                        </label>
-                    ))}
+                                    .map((product) => (
+                                        <div
+                                            key={product.id}
+                                            className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2"
+                                        >
+                                            {product.imageUrl ? (
+                                                <img
+                                                    src={product.imageUrl}
+                                                    alt={product.name}
+                                                    className="h-14 w-14 shrink-0 rounded-md border border-slate-100 object-cover"
+                                                    onError={(event) => {
+                                                        event.currentTarget.style.display = "none";
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-slate-100 text-xs text-slate-400">
+                                                    No image
+                                                </div>
+                                            )}
 
-                    {activeCategories.length === 0 && (
-                        <p className="text-xs text-slate-500">
-                            No active categories found.
-                        </p>
-                    )}
-                </div>
-            )}
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs font-semibold text-slate-800">
+                                                    {product.name}
+                                                </p>
 
-            <div className="rounded-lg bg-slate-50 p-3">
-                <p className="mb-2 text-xs font-semibold text-slate-700">
-                    Available Active Products
-                </p>
+                                                <p className="mt-1 text-xs font-medium text-emerald-700">
+                                                    {product.currency} {product.price}
+                                                </p>
 
-                {activeProducts
-                    .filter((product) =>
-                        selectionMode === "ALL_ACTIVE_CATEGORIES"
-                            ? true
-                            : selectedCategoryIds.includes(product.categoryId ?? -1)
-                    )
-                    .map((product) => (
-                        <p
-                            key={product.id}
-                            className="py-1 text-xs text-slate-600"
-                        >
-                            {product.name}
-                        </p>
-                    ))}
+                                                {product.description && (
+                                                    <p className="mt-1 line-clamp-2 text-[10px] text-slate-500">
+                                                        {product.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
 
-                {activeProducts.length === 0 && (
-                    <p className="text-xs text-slate-500">
-                        No active products found.
-                    </p>
-                )}
-            </div>
-        </>
-    );
-}
+                                {activeProducts.length === 0 && (
+                                    <p className="text-xs text-slate-500">
+                                        No active products found.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                    </>
+                );
+            }
 
             case "PRODUCT":
                 return (
@@ -2109,12 +2142,11 @@ const [activeProducts, setActiveProducts] = useState<
                         <Redo2 size={16} />
                     </button>
 
-                                        <span
-                        className={`hidden rounded-full px-3 py-1 text-[11px] font-semibold sm:block ${
-                            flowStatus === "PUBLISHED"
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-amber-50 text-amber-700"
-                        }`}
+                    <span
+                        className={`hidden rounded-full px-3 py-1 text-[11px] font-semibold sm:block ${flowStatus === "PUBLISHED"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                            }`}
                     >
                         {flowStatus === "PUBLISHED" ? "ACTIVE" : "DRAFT"}
                     </span>
@@ -2123,19 +2155,18 @@ const [activeProducts, setActiveProducts] = useState<
                         type="button"
                         disabled={isTogglingStatus}
                         onClick={toggleFlowStatus}
-                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm disabled:opacity-60 sm:px-4 sm:text-sm ${
-                            flowStatus === "PUBLISHED"
-                                ? "bg-slate-600 hover:bg-slate-700"
-                                : "bg-emerald-600 hover:bg-emerald-700"
-                        }`}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm disabled:opacity-60 sm:px-4 sm:text-sm ${flowStatus === "PUBLISHED"
+                            ? "bg-slate-600 hover:bg-slate-700"
+                            : "bg-emerald-600 hover:bg-emerald-700"
+                            }`}
                     >
                         <Send size={15} />
                         <span>
                             {isTogglingStatus
                                 ? "Updating..."
                                 : flowStatus === "PUBLISHED"
-                                  ? "Deactivate"
-                                  : "Activate"}
+                                    ? "Deactivate"
+                                    : "Activate"}
                         </span>
                     </button>
 
