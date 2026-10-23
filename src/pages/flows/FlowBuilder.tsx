@@ -15,6 +15,7 @@ import {
     createFlowEdge,
     deleteFlowEdge,
 } from "../../api/flowApi";
+import api from "../../api/axios";
 import {
     Background,
     Controls,
@@ -819,8 +820,12 @@ const [activeProducts, setActiveProducts] = useState<
 
     const [edges, setEdges] = useState<Edge[]>([]);
     const [saveMessage, setSaveMessage] = useState("");
-    const [isSavingFlow, setIsSavingFlow] = useState(false);
-    const initializedFlowRef = useRef<number | null>(null);
+        const [isSavingFlow, setIsSavingFlow] = useState(false);
+    const [flowStatus, setFlowStatus] = useState<string>("DRAFT");
+    const [isTogglingStatus, setIsTogglingStatus] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const initializedFlowRef = useRef<number | null>(null);  
+  
 
 
     useEffect(() => {
@@ -838,8 +843,14 @@ const [activeProducts, setActiveProducts] = useState<
         }
     };
 
-    void loadCommerceData();
+        void loadCommerceData();
 }, []);
+
+    useEffect(() => {
+        api.get(`/flows/${flowId}`)
+            .then((response) => setFlowStatus(String(response.data.status ?? "DRAFT")))
+            .catch((error) => console.error("Failed to load flow status:", error));
+    }, [flowId]);
 
     useEffect(() => {
         if (initializedFlowRef.current === flowId) {
@@ -1326,6 +1337,50 @@ const [activeProducts, setActiveProducts] = useState<
         }));
     };
 
+        const toggleFlowStatus = async () => {
+        const target = flowStatus === "PUBLISHED" ? "DRAFT" : "PUBLISHED";
+        setIsTogglingStatus(true);
+        setSaveMessage("");
+        try {
+            const response = await api.post(`/flows/${flowId}/status`, { status: target });
+            setFlowStatus(String(response.data.status));
+            setSaveMessage(
+                target === "PUBLISHED"
+                    ? "Flow is now active."
+                    : "Flow deactivated. You can edit it now."
+            );
+        } catch (error) {
+            console.error("Failed to change flow status:", error);
+            setSaveMessage("Status change failed. Please try again.");
+        } finally {
+            setIsTogglingStatus(false);
+        }
+    };
+
+    const handleImageUpload = async (file: File | undefined) => {
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            setSaveMessage("Upload failed: image must be smaller than 5 MB.");
+            return;
+        }
+        setIsUploadingImage(true);
+        setSaveMessage("");
+        try {
+            const form = new FormData();
+            form.append("file", file);
+            const response = await api.post("/assets/image", form, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            updateConfig("mediaUrl", String(response.data.url));
+            setSaveMessage("Image uploaded.");
+        } catch (error) {
+            console.error("Failed to upload image:", error);
+            setSaveMessage("Upload failed. Use a JPG or PNG under 5 MB.");
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
     const addButton = () => {
         if (!selectedNode) {
             return;
@@ -1407,7 +1462,51 @@ const [activeProducts, setActiveProducts] = useState<
                     />
                 );
 
-            case "IMAGE":
+                      case "IMAGE":
+                return (
+                    <>
+                        <div>
+                            <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                Upload image
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png"
+                                disabled={isUploadingImage}
+                                onChange={(event) => {
+                                    void handleImageUpload(event.target.files?.[0]);
+                                    event.target.value = "";
+                                }}
+                                className="block w-full text-xs text-slate-600"
+                            />
+                            {isUploadingImage && (
+                                <p className="mt-1 text-[11px] text-slate-500">Uploading...</p>
+                            )}
+                        </div>
+
+                        {String(config.mediaUrl ?? "") && (
+                            <img
+                                src={String(config.mediaUrl)}
+                                alt="Preview"
+                                className="max-h-32 rounded-lg border border-slate-200"
+                            />
+                        )}
+
+                        <PropertyInput
+                            label="Media URL"
+                            value={String(config.mediaUrl ?? "")}
+                            onChange={(value) => updateConfig("mediaUrl", value)}
+                            placeholder="https://..."
+                        />
+
+                        <PropertyTextarea
+                            label="Caption"
+                            value={String(config.caption ?? "")}
+                            onChange={(value) => updateConfig("caption", value)}
+                        />
+                    </>
+                );
+
             case "VIDEO":
             case "AUDIO":
             case "DOCUMENT":
@@ -2000,9 +2099,35 @@ const [activeProducts, setActiveProducts] = useState<
                         <Redo2 size={16} />
                     </button>
 
-                    <span className="hidden rounded-full bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700 sm:block">
-                        DRAFT
+                                        <span
+                        className={`hidden rounded-full px-3 py-1 text-[11px] font-semibold sm:block ${
+                            flowStatus === "PUBLISHED"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-amber-50 text-amber-700"
+                        }`}
+                    >
+                        {flowStatus === "PUBLISHED" ? "ACTIVE" : "DRAFT"}
                     </span>
+
+                    <button
+                        type="button"
+                        disabled={isTogglingStatus}
+                        onClick={toggleFlowStatus}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm disabled:opacity-60 sm:px-4 sm:text-sm ${
+                            flowStatus === "PUBLISHED"
+                                ? "bg-slate-600 hover:bg-slate-700"
+                                : "bg-emerald-600 hover:bg-emerald-700"
+                        }`}
+                    >
+                        <Send size={15} />
+                        <span>
+                            {isTogglingStatus
+                                ? "Updating..."
+                                : flowStatus === "PUBLISHED"
+                                  ? "Deactivate"
+                                  : "Activate"}
+                        </span>
+                    </button>
 
                     <button
                         type="button"
