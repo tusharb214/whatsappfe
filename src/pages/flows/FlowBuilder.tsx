@@ -815,7 +815,15 @@ function FlowBuilderCanvas({
 >([]);
 
 const [activeProducts, setActiveProducts] = useState<
-    { id: number; name: string; categoryId: number | null }[]
+  {
+    id: number;
+    name: string;
+    categoryId: number | null;
+    imageUrl: string | null;
+    price: number;
+    currency: string;
+    description: string | null;
+  }[]
 >([]);
 
     const [edges, setEdges] = useState<Edge[]>([]);
@@ -838,8 +846,10 @@ const [activeProducts, setActiveProducts] = useState<
 
             setActiveCategories(categories);
             setActiveProducts(products);
+             console.log("Active products:", products);
         } catch (error) {
             console.error("Failed to load commerce data:", error);
+            
         }
     };
 
