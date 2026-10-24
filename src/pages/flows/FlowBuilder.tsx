@@ -122,6 +122,24 @@ interface NodeDefinition {
     category: NodeCategory;
     icon: ComponentType<{ size?: number; className?: string }>;
 }
+type ActiveProduct = {
+    id: number;
+    name: string;
+    categoryId?: number | null;
+    category?: { id?: number | string } | null;
+    imageUrl: string | null;
+    price: number;
+    currency: string;
+    description: string | null;
+};
+
+// Reads the category id from either categoryId or category.id.
+function getProductCategoryId(product: ActiveProduct): number | null {
+    const raw = product.categoryId ?? product.category?.id ?? null;
+    if (raw === null || raw === undefined) return null;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+}
 
 const NODE_LIBRARY: NodeDefinition[] = [
     // =========================
@@ -561,10 +579,11 @@ function createDefaultConfig(type: string): Record<string, unknown> {
             return {
                 flowId: "",
             };
-        case "PRODUCT_MENU":
+                 case "PRODUCT_MENU":
             return {
                 selectionMode: "ALL_ACTIVE_CATEGORIES",
                 categoryIds: [],
+                productIds: [],
                 message: "Please select a category",
             };
 
@@ -814,17 +833,7 @@ function FlowBuilderCanvas({
         { id: number; name: string }[]
     >([]);
 
-    const [activeProducts, setActiveProducts] = useState<
-        {
-            id: number;
-            name: string;
-            categoryId: number | null;
-            imageUrl: string | null;
-            price: number;
-            currency: string;
-            description: string | null;
-        }[]
-    >([]);
+         const [activeProducts, setActiveProducts] = useState<ActiveProduct[]>([]);
 
     const [edges, setEdges] = useState<Edge[]>([]);
     const [saveMessage, setSaveMessage] = useState("");
@@ -1900,13 +1909,17 @@ function FlowBuilderCanvas({
                 );
 
 
-            case "PRODUCT_MENU": {
+                         case "PRODUCT_MENU": {
                 const selectionMode = String(
                     config.selectionMode ?? "ALL_ACTIVE_CATEGORIES"
                 );
 
                 const selectedCategoryIds = Array.isArray(config.categoryIds)
-                    ? (config.categoryIds as number[])
+                    ? (config.categoryIds as unknown[]).map(Number)
+                    : [];
+
+                const selectedProductIds = Array.isArray(config.productIds)
+                    ? (config.productIds as unknown[]).map(Number)
                     : [];
 
                 const toggleCategory = (categoryId: number, checked: boolean) => {
@@ -1917,6 +1930,45 @@ function FlowBuilderCanvas({
                     updateConfig("categoryIds", updatedIds);
                 };
 
+                const addProduct = (productId: number) => {
+                    if (
+                        !Number.isFinite(productId) ||
+                        selectedProductIds.includes(productId)
+                    ) {
+                        return;
+                    }
+                    updateConfig("productIds", [...selectedProductIds, productId]);
+                };
+
+                const removeProduct = (productId: number) => {
+                    updateConfig(
+                        "productIds",
+                        selectedProductIds.filter((id) => id !== productId)
+                    );
+                };
+
+                const visibleProducts = activeProducts.filter((product) => {
+                    if (selectionMode === "ALL_ACTIVE_CATEGORIES") {
+                        return true;
+                    }
+                    if (selectionMode === "SELECTED_CATEGORIES") {
+                        const categoryId = getProductCategoryId(product);
+                        return (
+                            categoryId !== null &&
+                            selectedCategoryIds.includes(categoryId)
+                        );
+                    }
+                    return selectedProductIds.includes(Number(product.id));
+                });
+
+                const knownCategoryIds = activeCategories.map((category) =>
+                    Number(category.id)
+                );
+
+                const addableProducts = activeProducts.filter(
+                    (product) => !selectedProductIds.includes(Number(product.id))
+                );
+
                 return (
                     <>
                         <PropertyTextarea
@@ -1926,11 +1978,12 @@ function FlowBuilderCanvas({
                         />
 
                         <PropertySelect
-                            label="Category Selection"
+                            label="Selection Mode"
                             value={selectionMode}
                             options={[
                                 "ALL_ACTIVE_CATEGORIES",
                                 "SELECTED_CATEGORIES",
+                                "SELECTED_PRODUCTS",
                             ]}
                             onChange={(value) => updateConfig("selectionMode", value)}
                         />
@@ -1948,10 +2001,12 @@ function FlowBuilderCanvas({
                                     >
                                         <input
                                             type="checkbox"
-                                            checked={selectedCategoryIds.includes(category.id)}
+                                            checked={selectedCategoryIds.includes(
+                                                Number(category.id)
+                                            )}
                                             onChange={(event) =>
                                                 toggleCategory(
-                                                    category.id,
+                                                    Number(category.id),
                                                     event.target.checked
                                                 )
                                             }
@@ -1965,68 +2020,156 @@ function FlowBuilderCanvas({
                                         No active categories found.
                                     </p>
                                 )}
+
+                                {selectedCategoryIds.length > 0 &&
+                                    visibleProducts.length === 0 &&
+                                    activeProducts.length > 0 && (
+                                        <p className="text-xs text-amber-600">
+                                            No products matched these categories. The product
+                                            response may not include a category id.
+                                        </p>
+                                    )}
                             </div>
                         )}
 
+                        {selectionMode === "SELECTED_PRODUCTS" && (
+                            <div className="space-y-2">
+                                <label className="block text-xs font-semibold text-slate-700">
+                                    Add individual product
+                                </label>
 
-                        <div className="rounded-lg bg-slate-50 p-3">
-                            <p className="mb-3 text-xs font-semibold text-slate-700">
-                                Available Active Products
-                            </p>
+                                <select
+                                    value=""
+                                    onChange={(event) =>
+                                        addProduct(Number(event.target.value))
+                                    }
+                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none focus:border-indigo-500"
+                                >
+                                    <option value="">Choose a product...</option>
 
-                            <div className="space-y-3">
-                                {activeProducts
-                                    .filter((product) =>
-                                        selectionMode === "ALL_ACTIVE_CATEGORIES"
-                                            ? true
-                                            : selectedCategoryIds.includes(product.categoryId ?? -1)
-                                    )
-                                    .map((product) => (
-                                        <div
-                                            key={product.id}
-                                            className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2"
-                                        >
-                                            {product.imageUrl ? (
-                                                <img
-                                                    src={product.imageUrl}
-                                                    alt={product.name}
-                                                    className="h-14 w-14 shrink-0 rounded-md border border-slate-100 object-cover"
-                                                    onError={(event) => {
-                                                        event.currentTarget.style.display = "none";
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-slate-100 text-xs text-slate-400">
-                                                    No image
-                                                </div>
-                                            )}
+                                    {activeCategories.map((category) => {
+                                        const items = addableProducts.filter(
+                                            (product) =>
+                                                getProductCategoryId(product) ===
+                                                Number(category.id)
+                                        );
 
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-xs font-semibold text-slate-800">
-                                                    {product.name}
-                                                </p>
+                                        if (items.length === 0) {
+                                            return null;
+                                        }
 
-                                                <p className="mt-1 text-xs font-medium text-emerald-700">
-                                                    {product.currency} {product.price}
-                                                </p>
+                                        return (
+                                            <optgroup key={category.id} label={category.name}>
+                                                {items.map((product) => (
+                                                    <option key={product.id} value={product.id}>
+                                                        {product.name} - {product.currency}{" "}
+                                                        {product.price}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        );
+                                    })}
 
-                                                {product.description && (
-                                                    <p className="mt-1 line-clamp-2 text-[10px] text-slate-500">
-                                                        {product.description}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
+                                    {(() => {
+                                        const others = addableProducts.filter((product) => {
+                                            const categoryId = getProductCategoryId(product);
+                                            return (
+                                                categoryId === null ||
+                                                !knownCategoryIds.includes(categoryId)
+                                            );
+                                        });
+
+                                        if (others.length === 0) {
+                                            return null;
+                                        }
+
+                                        return (
+                                            <optgroup label="Other">
+                                                {others.map((product) => (
+                                                    <option key={product.id} value={product.id}>
+                                                        {product.name} - {product.currency}{" "}
+                                                        {product.price}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        );
+                                    })()}
+                                </select>
 
                                 {activeProducts.length === 0 && (
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-amber-600">
                                         No active products found.
                                     </p>
                                 )}
                             </div>
-                        </div>
+                        )}
 
+                        <div className="rounded-lg bg-slate-50 p-3">
+                            <p className="mb-3 text-xs font-semibold text-slate-700">
+                                {selectionMode === "SELECTED_PRODUCTS"
+                                    ? `Selected Products (${visibleProducts.length})`
+                                    : `Available Active Products (${visibleProducts.length})`}
+                            </p>
+
+                            <div className="space-y-3">
+                                {visibleProducts.map((product) => (
+                                    <div
+                                        key={product.id}
+                                        className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2"
+                                    >
+                                        {product.imageUrl ? (
+                                            <img
+                                                src={product.imageUrl}
+                                                alt={product.name}
+                                                className="h-14 w-14 shrink-0 rounded-md border border-slate-100 object-cover"
+                                                onError={(event) => {
+                                                    event.currentTarget.style.display = "none";
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-slate-100 text-xs text-slate-400">
+                                                No image
+                                            </div>
+                                        )}
+
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-semibold text-slate-800">
+                                                {product.name}
+                                            </p>
+
+                                            <p className="mt-1 text-xs font-medium text-emerald-700">
+                                                {product.currency} {product.price}
+                                            </p>
+
+                                            {product.description && (
+                                                <p className="mt-1 line-clamp-2 text-[10px] text-slate-500">
+                                                    {product.description}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {selectionMode === "SELECTED_PRODUCTS" && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeProduct(Number(product.id))}
+                                                className="text-slate-400 hover:text-red-500"
+                                                aria-label={`Remove ${product.name}`}
+                                            >
+                                                <Trash2 size={15} />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+
+                                {visibleProducts.length === 0 && (
+                                    <p className="text-xs text-slate-500">
+                                        {selectionMode === "SELECTED_PRODUCTS"
+                                            ? "No products added yet. Use the dropdown above."
+                                            : "No products to show."}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     </>
                 );
             }
