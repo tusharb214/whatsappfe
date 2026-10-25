@@ -34,6 +34,13 @@ export default function MainLayout() {
       };
     }
 
+    if (path.startsWith("/orders")) {
+      return {
+        title: "Orders",
+        subtitle: "Orders placed by your customers on WhatsApp",
+      };
+    }
+
     if (path.startsWith("/catalogue/products")) {
       return {
         title: "Products",

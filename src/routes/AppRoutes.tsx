@@ -27,6 +27,7 @@ import SuperAdminUsers from "../pages/super-admin/SuperAdminUsers";
 import FlowBuilder from "../pages/flows/FlowBuilder";
 import { useParams } from "react-router-dom";
 import Flows from "../pages/flows/Flows";
+import OrdersPage from "../pages/orders/OrdersPage";
 
 import MainLayout from "../components/layout/MainLayout";
 
@@ -150,6 +151,13 @@ export default function AppRoutes() {
             <Route
               path="/flows/:flowId/builder"
               element={<FlowBuilderRoute />}
+            />
+
+            {/* Orders */}
+
+            <Route
+              path="/orders"
+              element={<OrdersPage />}
             />
 
             {/* Flows */}

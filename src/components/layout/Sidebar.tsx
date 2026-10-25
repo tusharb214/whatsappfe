@@ -3,6 +3,7 @@
   Building2,
   ChevronDown,
   ChevronRight,
+  ClipboardList,
   Inbox,
   LayoutDashboard,
   MessageCircle,
@@ -291,6 +292,27 @@ export default function Sidebar({
 
                     <span>
                       Categories
+                    </span>
+
+                  </NavLink>
+
+
+                  <NavLink
+                    to="/orders"
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      `sidebar-submenu-item ${
+                        isActive
+                          ? "sidebar-submenu-item-active"
+                          : ""
+                      }`
+                    }
+                  >
+
+                    <ClipboardList size={15} />
+
+                    <span>
+                      Orders
                     </span>
 
                   </NavLink>
