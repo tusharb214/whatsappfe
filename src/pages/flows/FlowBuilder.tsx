@@ -585,6 +585,12 @@ function createDefaultConfig(type: string): Record<string, unknown> {
                 categoryIds: [],
                 productIds: [],
                 message: "Please select a category",
+                orderPrefix: "ORD",
+                staffNotifyNumber: "",
+                itemLabel: "an item",
+                itemsButton: "Items",
+                paymentNote: "Payment: pay at pickup/delivery.",
+                restartHint: "Send hi for the menu.",
             };
 
         default:
@@ -768,6 +774,25 @@ function NodePreview({ data }: { data: FlowNodeData }) {
             return (
                 <p className="text-xs text-slate-500">
                     {String(config.text || "Select an option")}
+                </p>
+            );
+
+        case "PRODUCT_MENU":
+            return (
+                <p className="text-xs text-slate-500">
+                    {String(config.message || "Product menu")}
+                </p>
+            );
+
+        case "TEXT_INPUT":
+        case "PHONE_INPUT":
+        case "EMAIL_INPUT":
+        case "NUMBER_INPUT":
+        case "DATE_INPUT":
+            return (
+                <p className="text-xs text-slate-500">
+                    {String(config.question || "Ask a question")}
+                    {config.variable ? " > " + String(config.variable) : ""}
                 </p>
             );
 
@@ -1473,12 +1498,17 @@ function FlowBuilderCanvas({
         switch (selectedNode.data.nodeType) {
             case "TEXT_MESSAGE":
                 return (
-                    <PropertyTextarea
+                    <>
+                        <PropertyTextarea
                         label="Message"
                         value={String(config.text ?? "")}
                         onChange={(value) => updateConfig("text", value)}
                         placeholder="Type your WhatsApp message..."
                     />
+                        <p className="text-[10px] text-slate-400">
+                            Tip: use {"{{variable}}"} to insert a saved answer, e.g. {"{{name}}"}
+                        </p>
+                    </>
                 );
 
             case "IMAGE":
@@ -1986,6 +2016,50 @@ function FlowBuilderCanvas({
                                 "SELECTED_PRODUCTS",
                             ]}
                             onChange={(value) => updateConfig("selectionMode", value)}
+                        />
+
+                        <PropertyInput
+                            label="Item word (dish, product, service...)"
+                            value={String(config.itemLabel ?? "an item")}
+                            onChange={(value) => updateConfig("itemLabel", value)}
+                            placeholder="an item"
+                        />
+
+                        <PropertyInput
+                            label="List button text (max 20)"
+                            value={String(config.itemsButton ?? "Items")}
+                            onChange={(value) => updateConfig("itemsButton", value)}
+                            placeholder="Items"
+                        />
+
+                        <PropertyInput
+                            label="Payment note (shown after order)"
+                            value={String(config.paymentNote ?? "")}
+                            onChange={(value) => updateConfig("paymentNote", value)}
+                            placeholder="Payment: pay at pickup/delivery."
+                        />
+
+                        <PropertyInput
+                            label="Restart hint"
+                            value={String(config.restartHint ?? "")}
+                            onChange={(value) => updateConfig("restartHint", value)}
+                            placeholder="Send hi for the menu."
+                        />
+
+                        <PropertyInput
+                            label="Order Number Prefix"
+                            value={String(config.orderPrefix ?? "ORD")}
+                            onChange={(value) => updateConfig("orderPrefix", value)}
+                            placeholder="ORD"
+                        />
+
+                        <PropertyInput
+                            label="Staff Notify Number (with country code)"
+                            value={String(config.staffNotifyNumber ?? "")}
+                            onChange={(value) =>
+                                updateConfig("staffNotifyNumber", value)
+                            }
+                            placeholder="919XXXXXXXXX"
                         />
 
                         {selectionMode === "SELECTED_CATEGORIES" && (
