@@ -297,7 +297,11 @@ export default function Sidebar({
                   </NavLink>
 
 
-                  <NavLink
+                   
+
+                </div>
+              )}
+              <NavLink
                     to="/orders"
                     onClick={onClose}
                     className={({ isActive }) =>
@@ -316,9 +320,6 @@ export default function Sidebar({
                     </span>
 
                   </NavLink>
-
-                </div>
-              )}
 
 
               {/* =====================================

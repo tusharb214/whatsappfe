@@ -377,6 +377,14 @@ const NODE_LIBRARY: NodeDefinition[] = [
         icon: ShoppingBag,
     },
 
+      {
+        type: "MY_ORDERS",
+        label: "Cart and Orders",
+        description: "Customer cart, orders and cancel rules",
+        category: "COMMERCE",
+        icon: ShoppingCart,
+    },
+
     // =========================
     // CONTROL
     // =========================
@@ -591,6 +599,14 @@ function createDefaultConfig(type: string): Record<string, unknown> {
                 itemsButton: "Items",
                 paymentNote: "Payment: pay at pickup/delivery.",
                 restartHint: "Send hi for the menu.",
+            };
+
+                    case "MY_ORDERS":
+            return {
+                cancelMode: "UNTIL_ACCEPTED",
+                cancelMinutes: 5,
+                cancelDeniedMessage:
+                    "Sorry, this order can no longer be cancelled. Please call us.",
             };
 
         default:
@@ -2247,7 +2263,43 @@ function FlowBuilderCanvas({
                     </>
                 );
             }
+                            case "MY_ORDERS":
+                return (
+                    <>
+                        <PropertySelect
+                            label="Customer can cancel order"
+                            value={String(config.cancelMode ?? "UNTIL_ACCEPTED")}
+                            options={[
+                                "UNTIL_ACCEPTED",
+                                "UNTIL_PREPARING",
+                                "WITHIN_MINUTES",
+                                "NEVER",
+                            ]}
+                            onChange={(value) => updateConfig("cancelMode", value)}
+                        />
 
+                        {String(config.cancelMode ?? "UNTIL_ACCEPTED") ===
+                            "WITHIN_MINUTES" && (
+                            <PropertyInput
+                                label="Cancel allowed for (minutes)"
+                                type="number"
+                                value={String(config.cancelMinutes ?? 5)}
+                                onChange={(value) =>
+                                    updateConfig("cancelMinutes", Number(value))
+                                }
+                            />
+                        )}
+
+                        <PropertyInput
+                            label="Message when cancel is not allowed"
+                            value={String(config.cancelDeniedMessage ?? "")}
+                            onChange={(value) =>
+                                updateConfig("cancelDeniedMessage", value)
+                            }
+                            placeholder="Sorry, this order is already accepted. Please call us."
+                        />
+                    </>
+                );
             case "PRODUCT":
                 return (
                     <div className="space-y-1.5">
