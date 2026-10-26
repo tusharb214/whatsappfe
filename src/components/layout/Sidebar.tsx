@@ -14,6 +14,7 @@
   Users,
   X,
   Workflow,
+  CreditCard,
 } from "lucide-react";
 
 import { useState } from "react";
@@ -320,6 +321,36 @@ export default function Sidebar({
                     </span>
 
                   </NavLink>
+
+              <NavLink
+                to="/subscriptions"
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `sidebar-submenu-item ${
+                    isActive
+                      ? "sidebar-submenu-item-active"
+                      : ""
+                  }`
+                }
+              >
+                <CreditCard size={15} />
+                <span>Subscriptions</span>
+              </NavLink>
+
+              <NavLink
+                to="/memberships"
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `sidebar-submenu-item ${
+                    isActive
+                      ? "sidebar-submenu-item-active"
+                      : ""
+                  }`
+                }
+              >
+                <CreditCard size={15} />
+                <span>Memberships</span>
+              </NavLink>
 
 
               {/* =====================================

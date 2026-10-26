@@ -28,6 +28,8 @@ import FlowBuilder from "../pages/flows/FlowBuilder";
 import { useParams } from "react-router-dom";
 import Flows from "../pages/flows/Flows";
 import OrdersPage from "../pages/orders/OrdersPage";
+import SubscriptionsPage from "../pages/subscriptions/SubscriptionsPage";
+import MembershipsPage from "../pages/memberships/MembershipsPage";
 
 import MainLayout from "../components/layout/MainLayout";
 
@@ -158,6 +160,18 @@ export default function AppRoutes() {
             <Route
               path="/orders"
               element={<OrdersPage />}
+            />
+
+            {/* Subscriptions */}
+
+            <Route
+              path="/subscriptions"
+              element={<SubscriptionsPage />}
+            />
+
+            <Route
+              path="/memberships"
+              element={<MembershipsPage />}
             />
 
             {/* Flows */}

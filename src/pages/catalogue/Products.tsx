@@ -11,6 +11,7 @@ import {
     Eye,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import ImageUpload from "../../components/ImageUpload";
 import {
     createProduct,
     deactivateProduct,
@@ -1138,7 +1139,18 @@ export default function Products() {
                             {/* Image URL */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-medium text-[var(--color-text-secondary)]">
-                                    Image URL
+                                    Product image
+                                </label>
+
+                                <div className="mb-3">
+                                    <ImageUpload
+                                        value={form.imageUrl}
+                                        onChange={(url) => handleChange("imageUrl", url)}
+                                    />
+                                </div>
+
+                                <label className="mb-1.5 block text-[11px] text-[var(--color-text-muted)]">
+                                    Or paste image URL
                                 </label>
 
                                 <div className="relative">

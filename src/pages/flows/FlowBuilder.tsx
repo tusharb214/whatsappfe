@@ -45,6 +45,7 @@ import {
     ChevronDown,
     Clock3,
     Contact,
+    CreditCard,
     FileText,
     GitBranch,
     Globe,
@@ -80,6 +81,7 @@ import {
 } from "lucide-react";
 import { getActiveCategories } from "../../api/categoryApi";
 import { getActiveProducts } from "../../api/productApi";
+import { getPlans, type SubscriptionPlan } from "../../api/subscriptionApi";
 
 import type { ComponentType } from "react";
 
@@ -376,6 +378,13 @@ const NODE_LIBRARY: NodeDefinition[] = [
         category: "COMMERCE",
         icon: ShoppingBag,
     },
+    {
+        type: "SUBSCRIPTION",
+        label: "Subscription",
+        description: "Sell membership plans on WhatsApp",
+        category: "COMMERCE",
+        icon: CreditCard,
+    },
 
       {
         type: "MY_ORDERS",
@@ -607,6 +616,28 @@ function createDefaultConfig(type: string): Record<string, unknown> {
                 cancelMinutes: 5,
                 cancelDeniedMessage:
                     "Sorry, this order can no longer be cancelled. Please call us.",
+            };
+
+        case "SUBSCRIPTION":
+            return {
+                message: "Please choose a plan",
+                staffNotifyNumber: "",
+                planMode: "ALL_ACTIVE_PLANS",
+                planIds: [],
+                showBuy: true,
+                showMine: true,
+                buyLabel: "Buy plan",
+                mineLabel: "My subscription",
+                sendImage: true,
+                showDescription: true,
+                showPrice: true,
+                showDuration: true,
+                showFeatures: true,
+                showInstructions: true,
+                mineShowPlan: true,
+                mineShowDaysLeft: true,
+                mineShowEndDate: true,
+                mineShowBenefits: true,
             };
 
         default:
@@ -875,6 +906,7 @@ function FlowBuilderCanvas({
     >([]);
 
          const [activeProducts, setActiveProducts] = useState<ActiveProduct[]>([]);
+    const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
 
     const [edges, setEdges] = useState<Edge[]>([]);
     const [saveMessage, setSaveMessage] = useState("");
@@ -904,6 +936,12 @@ function FlowBuilderCanvas({
         };
 
         void loadCommerceData();
+    }, []);
+
+    useEffect(() => {
+        getPlans()
+            .then(setPlans)
+            .catch((error) => console.error("Failed to load plans:", error));
     }, []);
 
     useEffect(() => {
@@ -2300,6 +2338,133 @@ function FlowBuilderCanvas({
                         />
                     </>
                 );
+            case "SUBSCRIPTION": {
+                const flag = (key: string) => config[key] !== false;
+                const toggle = (key: string, label: string) => (
+                    <PropertyToggle
+                        key={key}
+                        label={label}
+                        checked={flag(key)}
+                        onChange={(value) => updateConfig(key, value)}
+                    />
+                );
+
+                return (
+                    <>
+                        <PropertyTextarea
+                            label="Plans message"
+                            value={String(config.message ?? "")}
+                            onChange={(value) => updateConfig("message", value)}
+                        />
+
+                        <PropertySelect
+                            label="Plans to show"
+                            value={String(config.planMode ?? "ALL_ACTIVE_PLANS")}
+                            options={["ALL_ACTIVE_PLANS", "SELECTED_PLANS"]}
+                            onChange={(value) => updateConfig("planMode", value)}
+                        />
+
+                        {String(config.planMode ?? "ALL_ACTIVE_PLANS") === "SELECTED_PLANS" && (
+                            <div className="space-y-2 rounded-lg bg-slate-50 p-3">
+                                <p className="text-xs font-semibold text-slate-700">Select plans</p>
+                                {plans.filter((plan) => plan.active).map((plan) => {
+                                    const chosen = Array.isArray(config.planIds)
+                                        ? (config.planIds as unknown[]).map(Number)
+                                        : [];
+                                    return (
+                                        <label
+                                            key={plan.id}
+                                            className="flex items-center gap-2 text-xs text-slate-700"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={chosen.includes(plan.id)}
+                                                onChange={(event) =>
+                                                    updateConfig(
+                                                        "planIds",
+                                                        event.target.checked
+                                                            ? [...chosen, plan.id]
+                                                            : chosen.filter((id) => id !== plan.id)
+                                                    )
+                                                }
+                                            />
+                                            {plan.name} ({plan.durationDays} days)
+                                        </label>
+                                    );
+                                })}
+                                {plans.filter((plan) => plan.active).length === 0 && (
+                                    <p className="text-xs text-amber-600">
+                                        No active plans. Create one on the Subscriptions page.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="space-y-2 rounded-lg bg-slate-50 p-3">
+                            <p className="text-xs font-semibold text-slate-700">Menu options</p>
+                            {toggle("showBuy", "Show Buy plan")}
+                            {flag("showBuy") && (
+                                <PropertyInput
+                                    label="Buy button text (max 20)"
+                                    value={String(config.buyLabel ?? "Buy plan")}
+                                    onChange={(value) => updateConfig("buyLabel", value)}
+                                />
+                            )}
+                            {toggle("showMine", "Show My subscription")}
+                            {flag("showMine") && (
+                                <PropertyInput
+                                    label="My subscription button text (max 20)"
+                                    value={String(config.mineLabel ?? "My subscription")}
+                                    onChange={(value) => updateConfig("mineLabel", value)}
+                                />
+                            )}
+                        </div>
+
+                        <div className="space-y-2 rounded-lg bg-slate-50 p-3">
+                            <p className="text-xs font-semibold text-slate-700">
+                                When a plan is shown
+                            </p>
+                            {toggle("showBack", "Back button")}
+                            {flag("showBack") && (
+                                <PropertyInput
+                                    label="Back button text (max 20)"
+                                    value={String(config.backLabel ?? "⬅️ Back")}
+                                    onChange={(value) => updateConfig("backLabel", value)}
+                                />
+                            )}
+                            {toggle("sendImage", "Send plan image")}
+                            {toggle("showDescription", "Description")}
+                            {toggle("showPrice", "Price")}
+                            {toggle("showDuration", "Duration (days)")}
+                            {toggle("showFeatures", "What is included")}
+                            {toggle("showInstructions", "Instructions")}
+                        </div>
+
+                        <div className="space-y-2 rounded-lg bg-slate-50 p-3">
+                            <p className="text-xs font-semibold text-slate-700">
+                                My subscription shows
+                            </p>
+                            {toggle("mineShowPlan", "Plan name")}
+                            {toggle("mineShowDaysLeft", "Days left")}
+                            {toggle("mineShowEndDate", "End date")}
+                            {toggle("mineShowBenefits", "Remaining benefits")}
+                        </div>
+
+                        <PropertyInput
+                            label="Staff Notify Number (with country code)"
+                            value={String(config.staffNotifyNumber ?? "")}
+                            onChange={(value) =>
+                                updateConfig("staffNotifyNumber", value)
+                            }
+                            placeholder="919XXXXXXXXX"
+                        />
+                        <p className="text-[10px] text-slate-400">
+                            Plans, images and rules are managed on the Subscriptions page.
+                        </p>
+                    </>
+                );
+            }
+
             case "PRODUCT":
                 return (
                     <div className="space-y-1.5">
@@ -2796,6 +2961,27 @@ function PropertyTextarea({
                 className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs leading-5 text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
         </div>
+    );
+}
+
+function PropertyToggle({
+    label,
+    checked,
+    onChange,
+}: {
+    label: string;
+    checked: boolean;
+    onChange: (value: boolean) => void;
+}) {
+    return (
+        <label className="flex items-center gap-2 text-xs text-slate-700">
+            <input
+                type="checkbox"
+                checked={checked}
+                onChange={(event) => onChange(event.target.checked)}
+            />
+            {label}
+        </label>
     );
 }
 
