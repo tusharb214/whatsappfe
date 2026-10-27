@@ -35,6 +35,7 @@ export interface Order {
     currency: string | null;
     status: OrderStatus;
     paymentStatus: PaymentStatus;
+    paymentMethod?: string | null;
     shippingAddress?: string | null;
     customerPhone?: string | null;
     customerName?: string | null;
@@ -61,3 +62,6 @@ export const updatePaymentStatus = async (
     paymentStatus: PaymentStatus
 ): Promise<Order> =>
     (await api.put<Order>(`/orders/${orderId}/payment`, null, { params: { paymentStatus } })).data;
+
+export const markCashReceived = async (orderId: number): Promise<Order> =>
+    (await api.post<Order>(`/orders/${orderId}/cash-received`)).data;

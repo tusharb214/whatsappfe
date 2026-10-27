@@ -607,6 +607,7 @@ function createDefaultConfig(type: string): Record<string, unknown> {
                 itemLabel: "an item",
                 itemsButton: "Items",
                 paymentNote: "Payment: pay at pickup/delivery.",
+                paymentMode: "CASH_ONLY",
                 restartHint: "Send hi for the menu.",
             };
 
@@ -2091,6 +2092,13 @@ function FlowBuilderCanvas({
                             value={String(config.paymentNote ?? "")}
                             onChange={(value) => updateConfig("paymentNote", value)}
                             placeholder="Payment: pay at pickup/delivery."
+                        />
+
+                        <PropertySelect
+                            label="Payment mode"
+                            value={String(config.paymentMode ?? "CASH_ONLY")}
+                            options={["CASH_ONLY", "ONLINE_AND_CASH"]}
+                            onChange={(value) => updateConfig("paymentMode", value)}
                         />
 
                         <PropertyInput

@@ -30,6 +30,7 @@ import Flows from "../pages/flows/Flows";
 import OrdersPage from "../pages/orders/OrdersPage";
 import SubscriptionsPage from "../pages/subscriptions/SubscriptionsPage";
 import MembershipsPage from "../pages/memberships/MembershipsPage";
+import Settings from "../pages/settings/Settings";
 
 import MainLayout from "../components/layout/MainLayout";
 
@@ -172,6 +173,10 @@ export default function AppRoutes() {
             <Route
               path="/memberships"
               element={<MembershipsPage />}
+            />
+            <Route
+              path="/settings"
+              element={<Settings />}
             />
 
             {/* Flows */}

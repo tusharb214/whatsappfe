@@ -4,6 +4,7 @@ import {
     ORDER_STATUSES,
     PAYMENT_STATUSES,
     getOrders,
+    markCashReceived,
     updateOrderStatus,
     updatePaymentStatus,
     type Order,
@@ -79,6 +80,15 @@ export default function OrdersPage() {
         } catch (e) {
             console.error(e);
             setError("Payment update failed.");
+        }
+    };
+
+    const cashReceived = async (order: Order) => {
+        try {
+            replace(await markCashReceived(order.id));
+        } catch (e) {
+            console.error(e);
+            setError("Could not mark cash received.");
         }
     };
 
@@ -192,6 +202,20 @@ export default function OrdersPage() {
                                                 <option key={s} value={s}>{nice(s)}</option>
                                             ))}
                                         </select>
+                                        <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                                            {order.paymentMethod === "ONLINE" ? "Online" : "Cash"}
+                                        </p>
+                                        {order.paymentStatus !== "PAID" &&
+                                            order.paymentMethod !== "ONLINE" &&
+                                            order.status !== "CANCELLED" && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => void cashReceived(order)}
+                                                    className="mt-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100"
+                                                >
+                                                    Mark cash received
+                                                </button>
+                                            )}
                                     </td>
                                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                         <select
